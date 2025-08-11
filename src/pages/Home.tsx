@@ -5,11 +5,23 @@ import {Contact} from "@/pages/Contact.tsx";
 
 export default function Home() {
     return (
+
         <>
-            <Hero/>
-            <About/>
-            <Works/>
-            <Contact/>
+            <section id="home">
+                <Hero />
+            </section>
+
+            <section id="about">
+                <About />
+            </section>
+
+            <section id="works">
+                <Works />
+            </section>
+
+            <section id="contact">
+                <Contact />
+            </section>
         </>
     );
 }

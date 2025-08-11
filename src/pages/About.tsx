@@ -9,7 +9,7 @@ export const About  = () => {
 
     return (
 
-        <section className="min-h-screen  bg-gradient-to-b from-background to-[#0a0a0a] py-20">
+        <section  className="min-h-screen  bg-gradient-to-b from-background to-[#0a0a0a] py-20">
             <div className='container mx-auto px-6 text-white'>
                 <h2 className="text-4xl font-bold font-vazir text-center mb-8">
                     درباره من
