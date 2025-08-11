@@ -1,24 +1,27 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
-
 <head>
+    <meta charset="UTF-8" />
     <script>
-        // Handle GitHub Pages routing
         var redirect = sessionStorage.redirect;
         delete sessionStorage.redirect;
         if (redirect && redirect !== location.href) {
             history.replaceState(null, null, redirect);
         }
     </script>
-    <meta charset="UTF-8" />
+    <script>
+        if (location.pathname !== '/personalblog/' && !location.pathname.includes('/index.html')) {
+            sessionStorage.redirect = location.href;
+            location.replace('/personalblog/');
+        }
+    </script>
 
-    <link rel="icon" type="image/svg+xml" href="/personalblog/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
-    <script type="module" crossorigin src="/personalblog/assets/index-2P-ASlTX.js"></script>
-    <link rel="stylesheet" crossorigin href="/personalblog/assets/index-C9I9hKFH.css">
 </head>
 <body>
 <div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
