@@ -27,12 +27,12 @@
 ---
 
 ## 🛠 تکنولوژی‌های استفاده‌شده
-- ⚛️ React 18
+- ⚛️ React 
 - ⌨️ TypeScript
 - 🎨 Tailwind CSS
 - 🎬 Framer Motion
 - 🧩 shadcn/ui
-- 🌍 React Router v7
+- 🌍 React Router 
 - 🚀 GitHub Pages
 
 ---
