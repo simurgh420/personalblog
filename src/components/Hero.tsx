@@ -35,7 +35,7 @@ export const Hero = () => {
       </div>
       {/* دکمه ها */}
       <motion.div
-        className="-mt-45 mb-6 flex justify-center gap-6"
+        className="-mt-40 mb-6 flex justify-center gap-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 0.6 }}
