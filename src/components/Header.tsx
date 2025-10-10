@@ -68,7 +68,6 @@ export const Header = () => {
           Simurgh
         </span>
             </a>
-
             {/* منوی دسکتاپ */}
             <nav className="hidden md:flex gap-8 font-vazir text-sm font-medium">
                 {navItems.map((item) => (
@@ -89,7 +88,7 @@ export const Header = () => {
             </nav>
 
             {/* دکمه حالت تاریک + موبایل */}
-            <div className="flex items-center gap-4">
+            <div >
                 <ThemeToggle />
                 <button
                     className="md:hidden text-white"
