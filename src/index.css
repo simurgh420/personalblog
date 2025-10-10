@@ -6,13 +6,6 @@ html {
   direction: rtl;
   text-align: right;
 }
-<<<<<<< HEAD
-html {
-  scroll-behavior: smooth;
-}
-=======
-
->>>>>>> fa44b3a7a0c3a5e4d7ad0881da17935bc906ae66
 @theme inline {
 
   --radius-sm: calc(var(--radius) - 4px);
