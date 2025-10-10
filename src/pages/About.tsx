@@ -1,9 +1,9 @@
-import { skills } from "@/data/skill";
-import SkillCard from "@/components/styled-components/Skill-card";
-import AboutMe from "@/components/styled-components/About-me";
-import Cube from "@/components/styled-components/Cube";
+import { skills } from '@/data/skill';
+import SkillCard from '@/components/styled-components/Skill-card';
+import AboutMe from '@/components/styled-components/About-me';
+import Cube from '@/components/styled-components/Cube';
 
-export const About  = () => {
+export const About = () => {
   return (
     <section className="relative min-h-screen bg-gradient-to-b from-background to-[#0a0a0a] py-20">
       {/* Cube تزئینی */}

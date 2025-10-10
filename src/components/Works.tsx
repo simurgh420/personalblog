@@ -1,6 +1,6 @@
-import { projects } from "@/data/projects";
-import ProjectCard from "./styled-components/ProjectCard";
-import Cube from "./styled-components/Cube";
+import { projects } from '@/data/projects';
+import ProjectCard from './styled-components/ProjectCard';
+import Cube from './styled-components/Cube';
 
 export const Works = () => {
   return (
