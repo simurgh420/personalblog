@@ -18,10 +18,22 @@ export const router = createBrowserRouter(
       element: <Layout />,
       errorElement: <NotFound />,
       children: [
-        { index: true, element: <Home /> },
-        { path: 'about', element: <About /> },
-        { path: 'works', element: <Works /> },
-        { path: 'contact', element: <Contact /> },
+        {
+          index: true,
+          element: <Home />,
+        },
+        {
+          path: 'about',
+          element: <About />,
+        },
+        {
+          path: 'works',
+          element: <Works />,
+        },
+        {
+          path: 'contact',
+          element: <Contact />,
+        },
       ],
     },
 

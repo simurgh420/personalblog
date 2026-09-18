@@ -1,20 +1,26 @@
-import { defineConfig } from 'vite'
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import react from '@vitejs/plugin-react'
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// https://vite.dev/config/
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export default defineConfig({
-    server: {
-        host: '0.0.0.0', // Bind to all available network interfaces
-        port: 3000, // Default port, change if necessary
-    },
-  base: "/personalblog/",
+  base: '/personalblog/',
+
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+  },
 
   plugins: [react(), tailwindcss()],
+
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
-})
+});

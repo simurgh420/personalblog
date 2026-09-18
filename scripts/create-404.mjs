@@ -1,12 +1,17 @@
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 
 const source = 'dist/index.html';
-const target = 'dist/404.html';
 
 if (!existsSync(source)) {
   throw new Error('dist/index.html پیدا نشد.');
 }
 
-copyFileSync(source, target);
+copyFileSync(source, 'dist/404.html');
 
-console.log('✅ dist/404.html ساخته شد.');
+mkdirSync('dist/secure-terminal', {
+  recursive: true,
+});
+
+copyFileSync(source, 'dist/secure-terminal/index.html');
+
+console.log('✅ index.html + 404.html + secure-terminal ساخته شد.');
