@@ -9,6 +9,7 @@ import Home from '@/pages/Home.tsx';
 import NotFound from '@/pages/NotFound.tsx';
 
 import SecureTerminal from '@/pages/secure-terminal/SecureTerminal.tsx';
+import SecretRoom from '@/pages/SecretRoom.tsx'; // 👈 ۱. ایمپورت کامپوننت جدید
 
 export const router = createBrowserRouter(
   [
@@ -37,10 +38,17 @@ export const router = createBrowserRouter(
       ],
     },
 
-    // Hidden Easter Egg
+    // Hidden Easter Egg 1
     {
       path: '/secure-terminal',
       element: <SecureTerminal />,
+      errorElement: <NotFound />,
+    },
+
+    // 👈 ۲. صفحه جدید برای QR Code اتاق شما
+    {
+      path: '/room', // آدرس صفحه شما می‌شود: /personalblog/room
+      element: <SecretRoom />,
       errorElement: <NotFound />,
     },
   ],
