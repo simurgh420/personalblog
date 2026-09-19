@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   Play,
   Pause,
@@ -21,6 +27,14 @@ import {
   Shuffle,
   X,
   Music,
+  BookOpen,
+  Atom,
+  Brain,
+  Cpu,
+  Feather,
+  Leaf,
+  Palette,
+  LayoutGrid,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -46,11 +60,8 @@ type QuoteItem = {
   bio?: string;
 };
 
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-  }>;
-};
+type CategoryStyle = { badge: string; activeTab: string; glow: string };
+type IconType = React.ComponentType<{ className?: string }>;
 
 /* ------------------------------------------------------------------ */
 /* Data                                                                */
@@ -59,70 +70,63 @@ type GeminiResponse = {
 const MUSIC_LIBRARY: Track[] = [
   {
     id: 1,
-    title: 'Cosmic Lofi Chill',
-    artist: 'Aether Sound',
-    genre: 'Lofi Beats',
-    duration: '2:45',
-    url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
+    title: 'Goodbye Brother',
+    artist: 'Ramin Djawadi',
+    genre: 'Soundtrack',
+    duration: '3:??',
+    url: 'https://cdn.tarafdari.com/tarafdari-static-files/ts10.tarafdari.com/contents/user782279/content-sound/03_ramin_djawadi_-_goodbye_brother.mp3',
   },
   {
     id: 2,
-    title: 'Midnight Chill Hop',
-    artist: 'Starlight Beats',
-    genre: 'Chillhop',
-    duration: '3:12',
-    url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73313.mp3?filename=lofi-music-11521.mp3',
+    title: 'همیشه مؤمن',
+    artist: 'Yavar',
+    genre: 'Persian Classic',
+    duration: '3:??',
+    url: 'https://nicmusic.musitraf.com/upload/2025/07/28/Yavar%20Hamishe%20Momen.mp3',
   },
   {
     id: 3,
-    title: 'Deep Space Ambient',
-    artist: 'Nebula Dreams',
-    genre: 'Ambient Space',
-    duration: '4:05',
-    url: 'https://cdn.pixabay.com/download/audio/2021/09/06/audio_8fa50f8386.mp3?filename=ambient-piano-amp-strings-20165.mp3',
+    title: 'نم نم بارون',
+    artist: 'Vigen',
+    genre: 'Persian Classic',
+    duration: '3:??',
+    url: 'https://cdn.tarafdari.com/tarafdari-static-files/ts17.tarafdari.com/contents/user844718/content-sound/nam_nam_baraan.mp3',
   },
   {
     id: 4,
-    title: 'Synthwave Night Drive',
-    artist: 'Cyberpulse',
-    genre: 'Synthwave',
-    duration: '3:30',
-    url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=synthwave-80s-110045.mp3',
+    title: 'Back to Her Man',
+    artist: 'Damien Rice',
+    genre: 'Alternative',
+    duration: '3:??',
+    url: 'https://cdn.tarafdari.com/tarafdari-static-files/ts2.tarafdari.com/contents/user267979/content-sound/back_to_her_man_-_damien_rice.mp3',
   },
   {
     id: 5,
-    title: 'Cyberpunk Chill Beats',
-    artist: 'Neon Skyline',
-    genre: 'Cyber Lofi',
-    duration: '2:58',
-    url: 'https://cdn.pixabay.com/download/audio/2022/10/25/audio_24a48f4a7d.mp3?filename=cyberpunk-beat-124451.mp3',
+    title: 'در انتظار باران',
+    artist: 'Keyhan Kalhor',
+    genre: 'Persian Instrumental',
+    duration: '3:??',
+    url: 'https://biamusiic.musitraf.com/Album/Artist/Keyhan%20Kalhor/Keyhan%20Kalhor%20-%20Shahre%20Khamoosh/04%20Dar%20Entezare%20Baran.mp3',
   },
   {
     id: 6,
-    title: 'Piano & Midnight Rain',
-    artist: 'Solitude Keys',
-    genre: 'Piano & Rain',
-    duration: '3:40',
-    url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_166b26d8ee.mp3?filename=soft-piano-with-rain-10708.mp3',
+    title: 'شیدا',
+    artist: 'Sowlo & Jimi',
+    genre: 'Persian',
+    duration: '3:??',
+    url: 'https://dl.ahlemusic.eu/music404/bahar/Sowlo%20&%20Jimi%20-%20Sheyda%20(Remix).mp3',
   },
   {
     id: 7,
-    title: 'Lofi Dreams & Stars',
-    artist: 'Celestial Waves',
-    genre: 'Lofi Beats',
-    duration: '3:05',
-    url: 'https://cdn.pixabay.com/download/audio/2023/04/18/audio_82c40c31c7.mp3?filename=lofi-groove-146316.mp3',
-  },
-  {
-    id: 8,
-    title: 'Ethereal Meditation',
-    artist: 'Zenith Horizon',
-    genre: 'Deep Meditation',
-    duration: '4:15',
-    url: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c29d660ff9.mp3?filename=deep-ambient-126871.mp3',
+    title: 'Dead Rose 4',
+    artist: 'Tik Rap 021 Remix',
+    genre: 'Rap Remix',
+    duration: '3:??',
+    url: 'https://kk.soonami.ir/Dead%20Rose%204%20(Tik%20Rap%20021%20Remix).mp3',
   },
 ];
 
+// 50 quotes across 7 categories — every category tab has real matches.
 const BUILTIN_QUOTES: QuoteItem[] = [
   {
     id: '1',
@@ -223,7 +227,491 @@ const BUILTIN_QUOTES: QuoteItem[] = [
     category: 'Wisdom',
     bio: 'فیلسوف کهن چین و بنیان‌گذار آئین دائوئیسم.',
   },
+  {
+    id: '11',
+    quote: 'هوش، توانایی سازگاری با تغییر است.',
+    originalQuote: 'Intelligence is the ability to adapt to change.',
+    author: 'استیون هاوکینگ',
+    authorEn: 'Stephen Hawking',
+    category: 'Science',
+    bio: 'کیهان‌شناس بریتانیایی و نویسنده تاریخچه‌ی زمان.',
+  },
+  {
+    id: '12',
+    quote:
+      'اگر دورتر از دیگران دیده‌ام، به این دلیل است که بر شانه‌های غول‌ها ایستاده‌ام.',
+    originalQuote:
+      'If I have seen further, it is by standing on the shoulders of giants.',
+    author: 'آیزاک نیوتن',
+    authorEn: 'Isaac Newton',
+    category: 'Science',
+    bio: 'فیزیکدان و ریاضی‌دان بنیان‌گذار مکانیک کلاسیک.',
+  },
+  {
+    id: '13',
+    quote: 'در زندگی چیزی برای ترسیدن وجود ندارد، فقط باید آن را درک کرد.',
+    originalQuote:
+      'Nothing in life is to be feared, it is only to be understood.',
+    author: 'ماری کوری',
+    authorEn: 'Marie Curie',
+    category: 'Science',
+    bio: 'نخستین برنده‌ی زن جایزه نوبل، پیشگام رادیواکتیویته.',
+  },
+  {
+    id: '14',
+    quote:
+      'این قوی‌ترین گونه نیست که زنده می‌ماند، بلکه گونه‌ای است که بیشترین سازگاری را دارد.',
+    originalQuote:
+      'It is not the strongest that survives, but the most adaptable.',
+    author: 'چارلز داروین',
+    authorEn: 'Charles Darwin',
+    category: 'Science',
+    bio: 'طبیعی‌دان بریتانیایی و بنیان‌گذار نظریه‌ی تکامل.',
+  },
+  {
+    id: '15',
+    quote: 'تخیل چیزی‌ست که فراتر از دیدنی‌ها را می‌بیند.',
+    originalQuote: 'Imagination is the faculty which sees beyond the visible.',
+    author: 'ادا لاولیس',
+    authorEn: 'Ada Lovelace',
+    category: 'Tech',
+    bio: 'نخستین برنامه‌نویس تاریخ رایانه.',
+  },
+  {
+    id: '16',
+    quote: 'تنها چیزی که می‌دانم این است که هیچ نمی‌دانم.',
+    originalQuote: 'The only true wisdom is in knowing you know nothing.',
+    author: 'سقراط',
+    authorEn: 'Socrates',
+    category: 'Philosophy',
+    bio: 'فیلسوف یونان باستان و بنیان‌گذار فلسفه‌ی غرب.',
+  },
+  {
+    id: '17',
+    quote:
+      'ما آنچه هستیم که بارها انجام می‌دهیم؛ پس برتری یک عادت است، نه یک عمل.',
+    originalQuote:
+      'We are what we repeatedly do. Excellence is not an act, but a habit.',
+    author: 'ارسطو',
+    authorEn: 'Aristotle',
+    category: 'Philosophy',
+    bio: 'فیلسوف و دانشمند یونانی، شاگرد افلاطون.',
+  },
+  {
+    id: '18',
+    quote: 'ما بیشتر از واقعیت، از تصورمان رنج می‌بریم.',
+    originalQuote: 'We suffer more often in imagination than in reality.',
+    author: 'سنکا',
+    authorEn: 'Seneca',
+    category: 'Philosophy',
+    bio: 'فیلسوف رواقی و سیاست‌مدار رومی.',
+  },
+  {
+    id: '19',
+    quote: 'انسان محکوم به آزاد بودن است.',
+    originalQuote: 'Man is condemned to be free.',
+    author: 'ژان-پل سارتر',
+    authorEn: 'Jean-Paul Sartre',
+    category: 'Philosophy',
+    bio: 'فیلسوف اگزیستانسیالیست و نویسنده‌ی فرانسوی.',
+  },
+  {
+    id: '20',
+    quote: 'ذهن همه‌چیز است؛ آنچه می‌اندیشی، همان می‌شوی.',
+    originalQuote: 'The mind is everything. What you think you become.',
+    author: 'بودا',
+    authorEn: 'Buddha',
+    category: 'Wisdom',
+    bio: 'بنیان‌گذار آیین بودایی.',
+  },
+  {
+    id: '21',
+    quote: 'فرقی نمی‌کند چقدر آهسته حرکت می‌کنی، مادامی که متوقف نشوی.',
+    originalQuote:
+      'It does not matter how slowly you go as long as you do not stop.',
+    author: 'کنفوسیوس',
+    authorEn: 'Confucius',
+    category: 'Wisdom',
+    bio: 'فیلسوف و معلم بزرگ چینی باستان.',
+  },
+  {
+    id: '22',
+    quote: 'تغییری باش که می‌خواهی در جهان ببینی.',
+    originalQuote: 'Be the change that you wish to see in the world.',
+    author: 'ماهاتما گاندی',
+    authorEn: 'Mahatma Gandhi',
+    category: 'Wisdom',
+    bio: 'رهبر معنوی و مبارز راه استقلال هند.',
+  },
+  {
+    id: '23',
+    quote: 'زیبایی حقیقتی است که ابدیت با آن آینه‌ی خود را نگاه می‌کند.',
+    originalQuote: 'Beauty is eternity gazing at itself in a mirror.',
+    author: 'جبران خلیل جبران',
+    authorEn: 'Khalil Gibran',
+    category: 'Wisdom',
+    bio: 'شاعر و نقاش لبنانی.',
+  },
+  {
+    id: '24',
+    quote:
+      'موفقیت معلم بدی است؛ باهوش‌ترین‌ها را وسوسه می‌کند که فکر کنند هرگز شکست نمی‌خورند.',
+    originalQuote:
+      "Success is a lousy teacher. It seduces smart people into thinking they can't lose.",
+    author: 'بیل گیتس',
+    authorEn: 'Bill Gates',
+    category: 'Tech',
+    bio: 'بنیان‌گذار مایکروسافت.',
+  },
+  {
+    id: '25',
+    quote:
+      'گاهی افرادی که کسی تصورشان را هم نمی‌کند، کارهایی می‌کنند که هیچ‌کس تصورش را نمی‌کرد.',
+    originalQuote:
+      'Sometimes it is the people no one imagines anything of who do the things that no one can imagine.',
+    author: 'آلن تورینگ',
+    authorEn: 'Alan Turing',
+    category: 'Tech',
+    bio: 'ریاضی‌دان و پدر علوم رایانه.',
+  },
+  {
+    id: '26',
+    quote:
+      'آسان‌تر است بعد از انجام کار عذرخواهی کنی تا این‌که پیشاپیش اجازه بگیری.',
+    originalQuote:
+      "It's easier to ask forgiveness than it is to get permission.",
+    author: 'گریس هاپر',
+    authorEn: 'Grace Hopper',
+    category: 'Tech',
+    bio: 'پیشگام برنامه‌نویسی رایانه و مخترع کامپایلر.',
+  },
+  {
+    id: '27',
+    quote: 'وب برای همه است.',
+    originalQuote: 'The Web is for everyone.',
+    author: 'تیم برنرز-لی',
+    authorEn: 'Tim Berners-Lee',
+    category: 'Tech',
+    bio: 'مخترع وب جهان‌گستر (WWW).',
+  },
+  {
+    id: '28',
+    quote: 'چه فکر کنی می‌توانی، چه فکر کنی نمی‌توانی، به هر حال درست می‌گویی.',
+    originalQuote:
+      "Whether you think you can, or you think you can't – you're right.",
+    author: 'هنری فورد',
+    authorEn: 'Henry Ford',
+    category: 'Mindset',
+    bio: 'صنعتگر آمریکایی و بنیان‌گذار فورد موتور.',
+  },
+  {
+    id: '29',
+    quote:
+      'موفقیت نهایی نیست، شکست کشنده نیست: آنچه اهمیت دارد شهامت ادامه دادن است.',
+    originalQuote:
+      'Success is not final, failure is not fatal: it is the courage to continue that counts.',
+    author: 'وینستون چرچیل',
+    authorEn: 'Winston Churchill',
+    category: 'Mindset',
+    bio: 'نخست‌وزیر بریتانیا در جنگ جهانی دوم.',
+  },
+  {
+    id: '30',
+    quote: 'من شکست نخورده‌ام؛ فقط ده‌هزار راهی را یافته‌ام که کار نمی‌کند.',
+    originalQuote:
+      "I have not failed. I've just found 10,000 ways that won't work.",
+    author: 'توماس ادیسون',
+    authorEn: 'Thomas Edison',
+    category: 'Mindset',
+    bio: 'مخترع آمریکایی و بنیان‌گذار جنرال الکتریک.',
+  },
+  {
+    id: '31',
+    quote: 'خوش‌بینی ایمانی است که به دستاورد منتهی می‌شود.',
+    originalQuote: 'Optimism is the faith that leads to achievement.',
+    author: 'هلن کلر',
+    authorEn: 'Helen Keller',
+    category: 'Mindset',
+    bio: 'نویسنده و فعال اجتماعی نابینا و ناشنوا.',
+  },
+  {
+    id: '32',
+    quote: 'آینده متعلق به کسانی است که به زیبایی رویاهای خود ایمان دارند.',
+    originalQuote:
+      'The future belongs to those who believe in the beauty of their dreams.',
+    author: 'النور روزولت',
+    authorEn: 'Eleanor Roosevelt',
+    category: 'Mindset',
+    bio: 'بانوی اول پیشین آمریکا و فعال حقوق بشر.',
+  },
+  {
+    id: '33',
+    quote:
+      'مردم فراموش می‌کنند چه گفتی، فراموش می‌کنند چه کردی، اما هرگز فراموش نمی‌کنند چه حسی به آن‌ها دادی.',
+    originalQuote:
+      'People will forget what you said, people will forget what you did, but people will never forget how you made them feel.',
+    author: 'مایا آنجلو',
+    authorEn: 'Maya Angelou',
+    category: 'Mindset',
+    bio: 'شاعر و نویسنده‌ی آمریکایی.',
+  },
+  {
+    id: '34',
+    quote: 'زندگی از نزدیک تراژدی است و از دور کمدی.',
+    originalQuote:
+      'Life is a tragedy when seen in close-up, but a comedy in long-shot.',
+    author: 'چارلی چاپلین',
+    authorEn: 'Charlie Chaplin',
+    category: 'Life',
+    bio: 'بازیگر و کارگردان بزرگ سینمای صامت.',
+  },
+  {
+    id: '35',
+    quote:
+      'دو روز مهم در زندگی هرکس وجود دارد: روزی که متولد می‌شود و روزی که می‌فهمد چرا.',
+    originalQuote:
+      'The two most important days in your life are the day you are born and the day you find out why.',
+    author: 'مارک تواین',
+    authorEn: 'Mark Twain',
+    category: 'Life',
+    bio: 'نویسنده‌ی آمریکایی.',
+  },
+  {
+    id: '36',
+    quote: 'خودت باش؛ چون بقیه از قبل اشغال شده‌اند.',
+    originalQuote: 'Be yourself; everyone else is already taken.',
+    author: 'اسکار وایلد',
+    authorEn: 'Oscar Wilde',
+    category: 'Life',
+    bio: 'نمایش‌نامه‌نویس و شاعر ایرلندی.',
+  },
+  {
+    id: '37',
+    quote:
+      'زندگی همان چیزی است که وقتی مشغول نقشه‌کشیدن برای آینده هستی، برایت اتفاق می‌افتد.',
+    originalQuote:
+      "Life is what happens to you while you're busy making other plans.",
+    author: 'جان لنون',
+    authorEn: 'John Lennon',
+    category: 'Life',
+    bio: 'نوازنده و ترانه‌سرای بریتانیایی، عضو گروه بیتلز.',
+  },
+  {
+    id: '38',
+    quote: 'سادگی نهایت پیچیدگی است.',
+    originalQuote: 'Simplicity is the ultimate sophistication.',
+    author: 'لئوناردو داوینچی',
+    authorEn: 'Leonardo da Vinci',
+    category: 'Art',
+    bio: 'نابغه‌ی رنسانس، نقاش و مخترع ایتالیایی.',
+  },
+  {
+    id: '39',
+    quote: 'رویایم را نقاشی می‌کنم، سپس رویای نقاشی‌ام را می‌بینم.',
+    originalQuote: 'I dream my painting and then I paint my dream.',
+    author: 'ونسان ونگوگ',
+    authorEn: 'Vincent van Gogh',
+    category: 'Art',
+    bio: 'نقاش هلندی، از بزرگان پسا-امپرسیونیسم.',
+  },
+  {
+    id: '40',
+    quote:
+      'هر کودکی هنرمند است؛ مشکل این است که چگونه هنرمند باقی بمانی وقتی بزرگ می‌شوی.',
+    originalQuote:
+      'Every child is an artist. The problem is how to remain an artist once we grow up.',
+    author: 'پابلو پیکاسو',
+    authorEn: 'Pablo Picasso',
+    category: 'Art',
+    bio: 'نقاش و مجسمه‌ساز اسپانیایی، بنیان‌گذار کوبیسم.',
+  },
+  {
+    id: '41',
+    quote: 'پاهایم برای چه به کارم می‌آیند وقتی بال دارم برای پرواز؟',
+    originalQuote: 'Feet, what do I need you for when I have wings to fly?',
+    author: 'فریدا کالو',
+    authorEn: 'Frida Kahlo',
+    category: 'Art',
+    bio: 'نقاش مکزیکی و از چهره‌های برجسته‌ی هنر مدرن.',
+  },
+  {
+    id: '42',
+    quote: 'هر روز چیزهای زیباتری کشف می‌کنم؛ همین دارد مرا دیوانه می‌کند.',
+    originalQuote:
+      "Every day I discover more and more beautiful things. It's enough to drive one mad.",
+    author: 'کلود مونه',
+    authorEn: 'Claude Monet',
+    category: 'Art',
+    bio: 'نقاش فرانسوی و بنیان‌گذار امپرسیونیسم.',
+  },
+  {
+    id: '43',
+    quote: 'برترین هنر جنگ، شکست دادن دشمن بدون جنگیدن است.',
+    originalQuote:
+      'The supreme art of war is to subdue the enemy without fighting.',
+    author: 'سون تزو',
+    authorEn: 'Sun Tzu',
+    category: 'Wisdom',
+    bio: 'استراتژیست و فیلسوف نظامی چین باستان.',
+  },
+  {
+    id: '44',
+    quote:
+      'انسان‌ها را نه خودِ اتفاقات، بلکه دیدگاهشان نسبت به آن‌ها آزار می‌دهد.',
+    originalQuote:
+      'Men are disturbed not by things, but by the views which they take of them.',
+    author: 'اپیکتتوس',
+    authorEn: 'Epictetus',
+    category: 'Philosophy',
+    bio: 'فیلسوف رواقی یونانی-رومی.',
+  },
+  {
+    id: '45',
+    quote:
+      'ناممکن فقط یک کلمه است که مردان ضعیف آن را برای راحتی خودشان بزرگ کرده‌اند.',
+    originalQuote: 'Impossible is just a big word thrown around by small men.',
+    author: 'محمدعلی کلی',
+    authorEn: 'Muhammad Ali',
+    category: 'Mindset',
+    bio: 'قهرمان بوکس و فعال اجتماعی آمریکایی.',
+  },
+  {
+    id: '46',
+    quote: 'ماجراجویی به خودی خود ارزشمند است.',
+    originalQuote: 'Adventure is worthwhile in itself.',
+    author: 'املیا ایرهارت',
+    authorEn: 'Amelia Earhart',
+    category: 'Mindset',
+    bio: 'نخستین زن خلبانی که به‌تنهایی اقیانوس اطلس را عبور کرد.',
+  },
+  {
+    id: '47',
+    quote: 'با وجود همه چیز، هنوز اعتقاد دارم مردم واقعاً خوب هستند.',
+    originalQuote:
+      'In spite of everything, I still believe that people are really good at heart.',
+    author: 'آن فرانک',
+    authorEn: 'Anne Frank',
+    category: 'Life',
+    bio: 'نویسنده‌ی خاطرات معروف دوران جنگ جهانی دوم.',
+  },
+  {
+    id: '48',
+    quote: 'نمی‌توانی دریا را تنها با ایستادن و نگاه‌کردن به آب عبور کنی.',
+    originalQuote:
+      "You can't cross the sea merely by standing and staring at the water.",
+    author: 'رابیندرانات تاگور',
+    authorEn: 'Rabindranath Tagore',
+    category: 'Wisdom',
+    bio: 'شاعر و فیلسوف هندی، برنده جایزه نوبل ادبیات.',
+  },
+  {
+    id: '49',
+    quote:
+      'ما همه به‌طور زیستی به هم، به‌طور شیمیایی به زمین و به‌طور اتمی به بقیه‌ی کیهان متصلیم.',
+    originalQuote:
+      'We are all connected to each other biologically, to the earth chemically and to the rest of the universe atomically.',
+    author: 'نیل دوگراس تایسون',
+    authorEn: 'Neil deGrasse Tyson',
+    category: 'Science',
+    bio: 'اخترفیزیک‌دان و مروج علم آمریکایی.',
+  },
+  {
+    id: '50',
+    quote:
+      'وقتی چیزی را واقعاً بخواهی، تمام هستی در تحقق آن آرزو همدست می‌شود.',
+    originalQuote:
+      'And, when you want something, all the universe conspires in helping you to achieve it.',
+    author: 'پائولو کوئلیو',
+    authorEn: 'Paulo Coelho',
+    category: 'Wisdom',
+    bio: 'نویسنده‌ی برزیلی، خالق رمان کیمیاگر.',
+  },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Category system — single source of truth                            */
+/* ------------------------------------------------------------------ */
+/* Tabs, icons, colors and the empty-state check are all DERIVED from   */
+/* this block + the live quote bank below. Nothing is hand-duplicated,  */
+/* so a category can never silently "fall back" to showing unrelated    */
+/* quotes again (that was the bug in the previous version).             */
+
+const CATEGORY_LABELS: Record<string, string> = {
+  Philosophy: 'فلسفه',
+  Science: 'علم و کیهان',
+  Mindset: 'نگرش',
+  Tech: 'تکنولوژی',
+  Wisdom: 'حکمت',
+  Life: 'زندگی',
+  Art: 'هنر',
+};
+
+const CATEGORY_ORDER = [
+  'Philosophy',
+  'Science',
+  'Mindset',
+  'Tech',
+  'Wisdom',
+  'Life',
+  'Art',
+];
+
+const CATEGORY_ICONS: Record<string, IconType> = {
+  Philosophy: BookOpen,
+  Science: Atom,
+  Mindset: Brain,
+  Tech: Cpu,
+  Wisdom: Feather,
+  Life: Leaf,
+  Art: Palette,
+};
+
+const CATEGORY_STYLES: Record<string, CategoryStyle> = {
+  Philosophy: {
+    badge: 'bg-violet-500/10 text-violet-300 border-violet-500/20',
+    activeTab: 'from-violet-600 to-indigo-500',
+    glow: 'rgba(139,92,246,0.35)',
+  },
+  Science: {
+    badge: 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+    activeTab: 'from-sky-600 to-cyan-500',
+    glow: 'rgba(56,189,248,0.35)',
+  },
+  Mindset: {
+    badge: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    activeTab: 'from-amber-600 to-orange-500',
+    glow: 'rgba(251,191,36,0.35)',
+  },
+  Tech: {
+    badge: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+    activeTab: 'from-teal-600 to-emerald-500',
+    glow: 'rgba(45,212,191,0.35)',
+  },
+  Wisdom: {
+    badge: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20',
+    activeTab: 'from-fuchsia-600 to-pink-500',
+    glow: 'rgba(232,121,249,0.35)',
+  },
+  Life: {
+    badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    activeTab: 'from-emerald-600 to-teal-500',
+    glow: 'rgba(52,211,153,0.35)',
+  },
+  Art: {
+    badge: 'bg-rose-500/10 text-rose-300 border-rose-500/20',
+    activeTab: 'from-rose-600 to-fuchsia-500',
+    glow: 'rgba(251,113,133,0.35)',
+  },
+};
+
+const ALL_CATEGORY_STYLE: CategoryStyle = {
+  badge: 'bg-teal-500/10 text-teal-300 border-teal-500/20',
+  activeTab: 'from-purple-600 to-teal-500',
+  glow: 'rgba(45,212,191,0.35)',
+};
+
+const getCategoryStyle = (category: string): CategoryStyle =>
+  CATEGORY_STYLES[category] ?? ALL_CATEGORY_STYLE;
 
 /* ------------------------------------------------------------------ */
 /* Global CSS                                                          */
@@ -265,17 +753,24 @@ const GLOBAL_STYLES = `
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes pop-heart {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.35); }
+    60%  { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
   .animate-aurora    { animation: aurora-move 26s ease-in-out infinite; }
   .animate-float-slow{ animation: float-slow 16s ease-in-out infinite; }
   .animate-twinkle   { animation: twinkle 3.5s ease-in-out infinite; }
   .animate-shoot     { animation: shoot 14s ease-in infinite; }
   .animate-breathe   { animation: breathe 9s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-  .animate-fade-in   { animation: fade-in 0.35s ease-out; }
+  .animate-fade-in   { animation: fade-in 0.4s ease-out; }
+  .animate-pop-heart { animation: pop-heart 0.45s ease-out; }
   .animate-grid      {
     background-image:
       linear-gradient(rgba(157,78,221,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,245,212,0.05) 1px, transparent 1px);
+      linear-gradient(90deg, rgba(45,212,191,0.05) 1px, transparent 1px);
     background-size: 60px 60px, 60px 60px;
     animation: grid-drift 30s linear infinite;
   }
@@ -285,12 +780,17 @@ const GLOBAL_STYLES = `
     position: fixed;
     width: 200px;
     height: 2px;
-    background: linear-gradient(to left, #ffffff, rgba(0,245,212,0.6), transparent);
+    background: linear-gradient(to left, #ffffff, rgba(45,212,191,0.6), transparent);
     border-radius: 999px;
-    filter: drop-shadow(0 0 6px rgba(0,245,212,0.85));
+    filter: drop-shadow(0 0 6px rgba(45,212,191,0.85));
     opacity: 0;
     pointer-events: none;
     z-index: 0;
+  }
+  .fluid-hero  { font-size: clamp(1.6rem, 1.1rem + 2.6vw, 2.35rem); }
+  .fluid-quote { font-size: clamp(1.05rem, 0.85rem + 1.2vw, 1.55rem); line-height: 1.75; }
+  @supports (padding: max(0px)) {
+    .safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
   }
 `;
 
@@ -314,22 +814,19 @@ const AmbientBackground: React.FC = () => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Aurora gradient blob */}
       <div
         className="absolute -inset-1/2 animate-aurora"
         style={{
           background:
-            'radial-gradient(circle at 20% 30%, rgba(157,78,221,0.18), transparent 42%),' +
-            'radial-gradient(circle at 80% 70%, rgba(0,245,212,0.14), transparent 42%),' +
+            'radial-gradient(circle at 20% 30%, rgba(157,78,221,0.20), transparent 42%),' +
+            'radial-gradient(circle at 80% 70%, rgba(45,212,191,0.16), transparent 42%),' +
             'radial-gradient(circle at 50% 50%, rgba(236,72,153,0.10), transparent 55%)',
           filter: 'blur(60px)',
         }}
       />
 
-      {/* Subtle grid */}
       <div className="absolute inset-0 animate-grid opacity-40" />
 
-      {/* Floating orbs */}
       <div
         className="absolute top-[12%] left-[8%] w-64 h-64 rounded-full animate-float-slow"
         style={{
@@ -342,7 +839,7 @@ const AmbientBackground: React.FC = () => {
         className="absolute top-[45%] right-[10%] w-72 h-72 rounded-full animate-float-slow"
         style={{
           background:
-            'radial-gradient(circle, rgba(0,245,212,0.24), transparent 70%)',
+            'radial-gradient(circle, rgba(45,212,191,0.26), transparent 70%)',
           filter: 'blur(80px)',
           animationDelay: '4s',
         }}
@@ -357,7 +854,6 @@ const AmbientBackground: React.FC = () => {
         }}
       />
 
-      {/* Twinkling stars */}
       {stars.map((s) => (
         <div
           key={s.id}
@@ -374,7 +870,6 @@ const AmbientBackground: React.FC = () => {
         />
       ))}
 
-      {/* Shooting stars */}
       <div
         className="shooting-star"
         style={{ top: '8%', right: '-8%', animationDelay: '2s' }}
@@ -388,7 +883,6 @@ const AmbientBackground: React.FC = () => {
         style={{ top: '65%', right: '-8%', animationDelay: '16s' }}
       />
 
-      {/* Vignette */}
       <div
         className="absolute inset-0"
         style={{
@@ -413,6 +907,7 @@ export default function App() {
   const [progress, setProgress] = useState<number>(0);
   const [likesCount, setLikesCount] = useState<number>(142);
   const [hasLikedCurrent, setHasLikedCurrent] = useState<boolean>(false);
+  const [heartBurst, setHeartBurst] = useState<boolean>(false);
 
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -427,11 +922,12 @@ export default function App() {
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
+  const [isDiscovering, setIsDiscovering] = useState<boolean>(false);
   const [showBioModal, setShowBioModal] = useState<boolean>(false);
   const [showTracklistModal, setShowTracklistModal] = useState<boolean>(false);
 
-  // Audio state
+  const [recentlyShownIds, setRecentlyShownIds] = useState<string[]>([]);
+
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [volume, setVolume] = useState<number>(0.75);
@@ -443,30 +939,65 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const discoverTimeoutRef = useRef<number | null>(null);
 
   /* -------------------- Derived values -------------------- */
   const filteredQuotes = useMemo<QuoteItem[]>(() => {
     if (selectedCategory === 'All') return quotes;
-    return quotes.filter(
-      (q) => q.category.toLowerCase() === selectedCategory.toLowerCase()
-    );
+    return quotes.filter((q) => q.category === selectedCategory);
   }, [quotes, selectedCategory]);
 
-  const safeQuoteList: QuoteItem[] =
-    filteredQuotes.length > 0 ? filteredQuotes : quotes;
-
-  const currentQuote: QuoteItem =
-    safeQuoteList[currentIndex % Math.max(safeQuoteList.length, 1)] ?? quotes[0];
+  // No more silent fallback to the full list when a category is empty — the
+  // UI now shows an honest empty state instead (see hasQuotesInCategory).
+  const hasQuotesInCategory = filteredQuotes.length > 0;
+  const currentQuote: QuoteItem | null = hasQuotesInCategory
+    ? filteredQuotes[currentIndex % filteredQuotes.length]
+    : null;
 
   const currentTrack: Track =
     MUSIC_LIBRARY[currentTrackIndex] ?? MUSIC_LIBRARY[0];
 
+  // Tabs are computed live from the actual quote bank — add/remove a quote's
+  // category anywhere and the tab list, its counts and its icon update
+  // automatically. Nothing is hand-maintained in two places anymore.
+  const categoryTabs = useMemo(() => {
+    const counts = new Map<string, number>();
+    quotes.forEach((q) =>
+      counts.set(q.category, (counts.get(q.category) ?? 0) + 1)
+    );
+    const present = CATEGORY_ORDER.filter((c) => counts.has(c));
+    return [
+      {
+        key: 'All',
+        label: 'همه',
+        count: quotes.length,
+        Icon: LayoutGrid as IconType,
+      },
+      ...present.map((key) => ({
+        key,
+        label: CATEGORY_LABELS[key] ?? key,
+        count: counts.get(key) ?? 0,
+        Icon: CATEGORY_ICONS[key] ?? (Sparkles as IconType),
+      })),
+    ];
+  }, [quotes]);
+
   /* -------------------- Clock -------------------- */
   useEffect(() => {
-    const clockInterval = window.setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const clockInterval = window.setInterval(
+      () => setCurrentTime(new Date()),
+      1000
+    );
     return () => window.clearInterval(clockInterval);
+  }, []);
+
+  /* -------------------- Fullscreen state sync (fixes Esc-key desync) -------------------- */
+  useEffect(() => {
+    const handleFsChange = () =>
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () =>
+      document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
   /* -------------------- Particle canvas -------------------- */
@@ -489,7 +1020,7 @@ export default function App() {
       x: Math.random() * width,
       y: Math.random() * height,
       radius: Math.random() * 2.4 + 0.8,
-      color: Math.random() > 0.4 ? '#00f5d4' : '#9d4edd',
+      color: Math.random() > 0.4 ? '#2dd4bf' : '#9d4edd',
       vx: (Math.random() - 0.5) * 0.25,
       vy: (Math.random() - 0.5) * 0.25,
       alpha: Math.random() * 0.55 + 0.25,
@@ -572,7 +1103,7 @@ export default function App() {
 
   /* -------------------- Auto-rotate progress -------------------- */
   useEffect(() => {
-    if (!autoRotate) {
+    if (!autoRotate || !hasQuotesInCategory) {
       setProgress(0);
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
@@ -605,7 +1136,7 @@ export default function App() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRotate, currentIndex, selectedCategory]);
+  }, [autoRotate, currentIndex, selectedCategory, hasQuotesInCategory]);
 
   /* -------------------- Volume sync -------------------- */
   useEffect(() => {
@@ -642,6 +1173,15 @@ export default function App() {
     }
   }, [isPlaying, hasEntered, currentTrackIndex]);
 
+  /* -------------------- Cleanup pending discover timeout on unmount -------------------- */
+  useEffect(() => {
+    return () => {
+      if (discoverTimeoutRef.current !== null) {
+        window.clearTimeout(discoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   /* -------------------- Audio helpers -------------------- */
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
@@ -659,9 +1199,7 @@ export default function App() {
     }
   };
 
-  const handleTrackEnded = () => {
-    handleNextTrack();
-  };
+  const handleTrackEnded = () => handleNextTrack();
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -704,19 +1242,19 @@ export default function App() {
     setShowTracklistModal(false);
   };
 
-  const handleNextQuote = () => {
+  const handleNextQuote = useCallback(() => {
+    if (filteredQuotes.length === 0) return;
     setProgress(0);
     setHasLikedCurrent(false);
-    setCurrentIndex((prev) => (prev + 1) % Math.max(safeQuoteList.length, 1));
-  };
+    setCurrentIndex((prev) => (prev + 1) % filteredQuotes.length);
+  }, [filteredQuotes.length]);
 
   const handlePrevQuote = () => {
+    if (filteredQuotes.length === 0) return;
     setProgress(0);
     setHasLikedCurrent(false);
     setCurrentIndex(
-      (prev) =>
-        (prev - 1 + Math.max(safeQuoteList.length, 1)) %
-        Math.max(safeQuoteList.length, 1)
+      (prev) => (prev - 1 + filteredQuotes.length) % filteredQuotes.length
     );
   };
 
@@ -726,7 +1264,9 @@ export default function App() {
       ? favorites.filter((f) => f.id !== quote.id)
       : [...favorites, quote];
     setFavorites(updated);
-    showToast(exists ? 'از علاقه‌مندی‌ها حذف شد' : 'به علاقه‌مندی‌ها اضافه شد ✨');
+    showToast(
+      exists ? 'از علاقه‌مندی‌ها حذف شد' : 'به علاقه‌مندی‌ها اضافه شد ✨'
+    );
     try {
       localStorage.setItem('secret_room_favs', JSON.stringify(updated));
     } catch (e) {
@@ -738,6 +1278,8 @@ export default function App() {
     if (!hasLikedCurrent) {
       setLikesCount((p) => p + 1);
       setHasLikedCurrent(true);
+      setHeartBurst(true);
+      window.setTimeout(() => setHeartBurst(false), 450);
       showToast('احساسات شما ثبت شد! ❤️');
     } else {
       setLikesCount((p) => p - 1);
@@ -746,6 +1288,7 @@ export default function App() {
   };
 
   const copyQuoteToClipboard = () => {
+    if (!currentQuote) return;
     const text = `"${currentQuote.quote}"\n— ${currentQuote.author}`;
     if (navigator.clipboard) {
       navigator.clipboard
@@ -758,6 +1301,7 @@ export default function App() {
   };
 
   const handleShare = () => {
+    if (!currentQuote) return;
     if (navigator.share) {
       navigator
         .share({
@@ -775,83 +1319,42 @@ export default function App() {
     if (!document.fullscreenElement) {
       document.documentElement
         .requestFullscreen()
-        .then(() => setIsFullscreen(true))
         .catch((e: unknown) => console.log(e));
     } else if (document.exitFullscreen) {
-      document
-        .exitFullscreen()
-        .then(() => setIsFullscreen(false))
-        .catch((e: unknown) => console.log(e));
+      document.exitFullscreen().catch((e: unknown) => console.log(e));
     }
   };
 
   const toggleMute = () => setIsMuted((m) => !m);
 
-  const fetchNewQuoteFromGemini = async () => {
-    setIsLoadingAi(true);
-    showToast('در حال دریافت هوشمندانه حکمت جدید از Gemini...');
+  const handleDiscoverQuote = () => {
+    setIsDiscovering(true);
+    showToast('در حال جست‌وجو در گنجینه‌ی حکمت...');
 
-    try {
-      const apiKey = '';
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+    discoverTimeoutRef.current = window.setTimeout(() => {
+      const pool = BUILTIN_QUOTES.filter(
+        (q) => !recentlyShownIds.includes(q.id)
+      );
+      const source = pool.length > 0 ? pool : BUILTIN_QUOTES;
+      const picked = source[Math.floor(Math.random() * source.length)];
 
-      const systemPrompt = `تو یک استاد حکمت، فلسفه، کیهان‌شناسی و جهان‌بینی هستی. وظیفه تو انتخاب یا تولید یک نقل‌قول خیره‌کننده، عمیق و تفکربرانگیز به زبان فارسی فصیح از شخصیت‌های بزرگ تاریخ یا فرهنگ مدرن است.
-پاسخ فقط و فقط یک JSON معتبر باشد:
-{
-  "quote": "متن عمیق و زیبای فارسی",
-  "originalQuote": "متن اصلی انگلیسی یا منبع اصلی",
-  "author": "نام شخصیت به فارسی",
-  "authorEn": "Author Name in English",
-  "category": "یکی از موارد دقیق: Philosophy, Science, Mindset, Tech, Wisdom",
-  "bio": "خلاصه کوتاه ۱ خطی درباره اهمیت یا دستاورد شخصیت"
-}`;
+      const updatedRecent = [...recentlyShownIds, picked.id];
+      setRecentlyShownIds(
+        updatedRecent.length >= BUILTIN_QUOTES.length
+          ? [picked.id]
+          : updatedRecent
+      );
 
-      const payload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: 'یک سخن ناب و جدید درباره عظمت هستی یا فلسفه زندگی خلق یا استخراج کن.',
-              },
-            ],
-          },
-        ],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: { responseMimeType: 'application/json' },
-      };
-
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      setQuotes((prev) => {
+        const withoutDupe = prev.filter((q) => q.id !== picked.id);
+        return [picked, ...withoutDupe];
       });
-
-      const data = (await res.json()) as GeminiResponse;
-      const rawJsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!rawJsonText) throw new Error('Invalid Gemini response');
-
-      const parsed = JSON.parse(rawJsonText) as Partial<QuoteItem>;
-
-      const newQuoteObj: QuoteItem = {
-        id: Date.now().toString(),
-        quote: parsed.quote || 'حقیقت در ژرفای سکوت نهفته است.',
-        originalQuote: parsed.originalQuote || 'Truth lies in deep silence.',
-        author: parsed.author || 'متفکر بزرگ',
-        authorEn: parsed.authorEn || 'Great Thinker',
-        category: parsed.category || 'Wisdom',
-        bio: parsed.bio || 'شخصیت برجسته تاریخ اندیشه.',
-      };
-
-      setQuotes((prev) => [newQuoteObj, ...prev]);
+      setSelectedCategory('All');
       setCurrentIndex(0);
-      showToast('✨ نقل‌قول تازه با موفقیت ایجاد گردید!');
-    } catch (err: unknown) {
-      console.error('Gemini API Error:', err);
-      showToast('خطا در برقراری ارتباط. لطفاً دوباره تلاش کنید.');
-    } finally {
-      setIsLoadingAi(false);
-    }
+      setHasLikedCurrent(false);
+      setIsDiscovering(false);
+      showToast('✨ یک حکمت تازه پیدا شد!');
+    }, 550);
   };
 
   const formatAudioTime = (seconds: number): string => {
@@ -867,7 +1370,7 @@ export default function App() {
 
   const renderIntro = () => (
     <div
-      className="relative min-h-screen bg-[#03030c] text-white flex flex-col items-center justify-center p-6 overflow-hidden select-none font-['Vazirmatn',sans-serif]"
+      className="relative min-h-dvh bg-[#03030c] text-white flex flex-col items-center justify-center p-5 sm:p-6 overflow-hidden select-none font-['Vazirmatn',sans-serif]"
       dir="rtl"
     >
       <canvas
@@ -876,7 +1379,7 @@ export default function App() {
       />
 
       <div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full animate-breathe pointer-events-none"
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 w-75 h-75 sm:w-105 sm:h-105 rounded-full animate-breathe pointer-events-none"
         style={{
           background:
             'radial-gradient(circle, rgba(157,78,221,0.35), transparent 70%)',
@@ -884,11 +1387,11 @@ export default function App() {
         }}
       />
 
-      <div className="relative z-10 max-w-sm w-full flex flex-col items-center text-center space-y-8 backdrop-blur-2xl bg-white/[0.03] p-8 rounded-3xl border border-white/10 shadow-[0_0_60px_rgba(157,78,221,0.25)]">
+      <div className="relative z-10 max-w-sm sm:max-w-md w-full flex flex-col items-center text-center space-y-6 sm:space-y-8 backdrop-blur-2xl bg-white/3 p-6 sm:p-9 rounded-3xl border border-white/10 shadow-[0_0_60px_rgba(157,78,221,0.25)]">
         <div className="relative group cursor-pointer" onClick={handleEnterApp}>
-          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-400 blur-md opacity-80 group-hover:opacity-100 transition duration-500"></div>
-          <div className="relative w-28 h-28 rounded-full bg-[#070718] border border-white/20 flex items-center justify-center shadow-2xl">
-            <Sparkles className="w-12 h-12 text-cyan-300 animate-spin-slow" />
+          <div className="absolute -inset-1 rounded-full bg-linear-to-r from-purple-600 via-fuchsia-500 to-teal-400 blur-md opacity-80 group-hover:opacity-100 transition duration-500" />
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#070718] border border-white/20 flex items-center justify-center shadow-2xl">
+            <Sparkles className="w-11 h-11 sm:w-12 sm:h-12 text-teal-300 animate-spin-slow" />
           </div>
         </div>
 
@@ -896,10 +1399,10 @@ export default function App() {
           <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30">
             به اتاق مخفی من خوش اومدی
           </span>
-          <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-cyan-200 to-pink-300">
+          <h1 className="fluid-hero font-extrabold bg-clip-text text-transparent bg-linear-to-r from-purple-300 via-teal-200 to-fuchsia-300">
             اینجا اتاق مخفی منه
           </h1>
-          <p className="text-xs text-gray-400 leading-relaxed font-light">
+          <p className="text-xs sm:text-[13px] text-gray-400 leading-relaxed font-light">
             پشت این در، دنیایی‌ست که فقط مال خودمه؛ پر از سکوت، موسیقی و
             جمله‌هایی که توی تاریکی می‌درخشن. اگر تو هم دنبال یه گوشه‌ی آروم
             برای فکر کردن هستی، پا بذار تو اتاق مخفی من.
@@ -908,7 +1411,7 @@ export default function App() {
 
         <button
           onClick={handleEnterApp}
-          className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white font-bold text-sm shadow-[0_0_35px_rgba(0,245,212,0.35)] hover:shadow-[0_0_50px_rgba(157,78,221,0.6)] transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-4 px-6 rounded-2xl bg-linear-to-r from-purple-600 via-fuchsia-600 to-teal-500 text-white font-bold text-sm shadow-[0_0_35px_rgba(45,212,191,0.35)] hover:shadow-[0_0_50px_rgba(157,78,221,0.6)] transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
         >
           <span>ورود به اتاق مخفی</span>
           <Play className="w-4 h-4 fill-current ml-1" />
@@ -923,7 +1426,7 @@ export default function App() {
 
   const renderMain = () => (
     <div
-      className="relative min-h-screen bg-[#03030c] text-gray-100 selection:bg-cyan-500/30 pb-40 overflow-x-hidden font-['Vazirmatn',sans-serif]"
+      className="relative min-h-dvh bg-[#03030c] text-gray-100 selection:bg-teal-500/30 pb-44 sm:pb-40 overflow-x-hidden font-['Vazirmatn',sans-serif]"
       dir="rtl"
     >
       <canvas
@@ -932,27 +1435,27 @@ export default function App() {
       />
 
       {toastMessage && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[#0c0c22]/90 backdrop-blur-2xl border border-cyan-500/40 text-cyan-200 px-6 py-3 rounded-full shadow-[0_0_35px_rgba(0,245,212,0.25)] text-xs font-semibold flex items-center gap-2 animate-bounce">
-          <Sparkles className="w-4 h-4 text-cyan-400" />
-          <span>{toastMessage}</span>
+        <div className="fixed top-5 sm:top-6 left-1/2 -translate-x-1/2 z-50 bg-[#0c0c22]/90 backdrop-blur-2xl border border-teal-500/40 text-teal-200 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-[0_0_35px_rgba(45,212,191,0.25)] text-xs font-semibold flex items-center gap-2 animate-fade-in max-w-[90vw] text-center">
+          <Sparkles className="w-4 h-4 text-teal-400 shrink-0" />
+          <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
-      <div className="relative z-10 max-w-xl mx-auto px-4 pt-6 space-y-6">
+      <div className="relative z-10 max-w-xl sm:max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-5 sm:space-y-6">
         {/* Header */}
-        <header className="backdrop-blur-xl bg-white/[0.03] p-4 rounded-3xl border border-white/10 shadow-lg flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-cyan-400 p-[1px] shadow-[0_0_20px_rgba(157,78,221,0.4)]">
+        <header className="backdrop-blur-xl bg-white/3 p-4 rounded-3xl border border-white/10 shadow-lg flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-linear-to-tr from-purple-600 to-teal-400 p-px shadow-[0_0_20px_rgba(157,78,221,0.4)] shrink-0">
               <div className="w-full h-full bg-[#070718] rounded-[15px] flex items-center justify-center">
-                <Moon className="w-5 h-5 text-cyan-300" />
+                <Moon className="w-5 h-5 text-teal-300" />
               </div>
             </div>
-            <div>
-              <h1 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-cyan-300">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-linear-to-r from-purple-300 to-teal-300 truncate">
                 اتاق مخفی من
               </h1>
               <span className="text-[10px] text-gray-400 flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-cyan-400" />
+                <Clock className="w-3 h-3 text-teal-400" />
                 {currentTime.toLocaleTimeString('fa-IR', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -966,7 +1469,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={toggleFullscreen}
               className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-all active:scale-90"
@@ -980,227 +1483,264 @@ export default function App() {
             </button>
 
             <button
-              onClick={fetchNewQuoteFromGemini}
-              disabled={isLoadingAi}
+              onClick={handleDiscoverQuote}
+              disabled={isDiscovering}
               className="p-2.5 rounded-2xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 transition-all active:scale-90 disabled:opacity-60"
-              title="تولید نقل قول با Gemini"
+              title="حکمت تصادفی تازه"
             >
               <Zap
-                className={`w-4 h-4 ${
-                  isLoadingAi ? 'animate-spin text-cyan-400' : ''
-                }`}
+                className={`w-4 h-4 ${isDiscovering ? 'animate-spin text-teal-400' : ''}`}
               />
             </button>
           </div>
         </header>
 
-        {/* Categories */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {(
-            [
-              ['All', 'همه'],
-              ['Philosophy', 'فلسفه'],
-              ['Science', 'علم و کیهان'],
-              ['Mindset', 'نگرش'],
-              ['Tech', 'تکنولوژی'],
-              ['Wisdom', 'حکمت'],
-            ] as const
-          ).map(([cat, label]) => {
-            const isActive = selectedCategory === cat;
+        {/* Categories — dynamic, icon + live count per tab */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible">
+          {categoryTabs.map(({ key, label, count, Icon }) => {
+            const isActive = selectedCategory === key;
+            const style =
+              key === 'All' ? ALL_CATEGORY_STYLE : getCategoryStyle(key);
             return (
               <button
-                key={cat}
+                key={key}
                 onClick={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(key);
                   setCurrentIndex(0);
                 }}
-                className={`px-4 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                style={
+                  isActive ? { boxShadow: `0 0 20px ${style.glow}` } : undefined
+                }
+                className={`px-3.5 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-[0_0_20px_rgba(0,245,212,0.35)] scale-105'
-                    : 'bg-white/[0.03] text-gray-400 hover:bg-white/[0.08] hover:text-gray-200 border border-white/5'
+                    ? `bg-linear-to-r ${style.activeTab} text-white scale-105`
+                    : 'bg-white/3 text-gray-400 hover:bg-white/8 hover:text-gray-200 border border-white/5'
                 }`}
               >
-                {label}
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
+                <span
+                  className={`text-[10px] rounded-full px-1.5 ${
+                    isActive ? 'bg-black/20' : 'bg-white/5 text-gray-500'
+                  }`}
+                >
+                  {count.toLocaleString('fa-IR')}
+                </span>
               </button>
             );
           })}
         </div>
 
         {/* Quote Card */}
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-400 rounded-3xl blur-md opacity-45 group-hover:opacity-80 transition duration-500"></div>
+        {currentQuote ? (
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-linear-to-r from-purple-600 via-fuchsia-600 to-teal-400 rounded-3xl blur-md opacity-45 group-hover:opacity-80 transition duration-500" />
 
-          <div className="relative rounded-3xl bg-[#08081a]/90 backdrop-blur-2xl border border-white/10 p-6 md:p-8 space-y-6 shadow-2xl overflow-hidden">
-            {autoRotate && (
-              <div className="absolute top-0 left-0 right-0 h-1 bg-white/5">
-                <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-[width] duration-75 ease-linear"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-white/10 flex items-center justify-center text-cyan-300 font-bold text-sm shadow-inner">
-                  {currentQuote.author.charAt(0)}
+            <div className="relative rounded-3xl bg-[#08081a]/90 backdrop-blur-2xl border border-white/10 p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-2xl overflow-hidden">
+              {autoRotate && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-white/5">
+                  <div
+                    className="h-full bg-linear-to-r from-purple-500 to-teal-400 transition-[width] duration-75 ease-linear"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-gray-100 flex items-center gap-1.5">
-                    {currentQuote.author}
-                    <button
-                      onClick={() => setShowBioModal((v) => !v)}
-                      className="text-gray-400 hover:text-cyan-300 transition-colors"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </h3>
-                  <span className="text-[11px] text-gray-400 font-mono tracking-wide">
-                    {currentQuote.authorEn}
+              )}
+
+              <div
+                key={currentQuote.id}
+                className="space-y-5 sm:space-y-6 animate-fade-in"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-purple-500/20 to-teal-500/20 border border-white/10 flex items-center justify-center text-teal-300 font-bold text-sm shadow-inner shrink-0">
+                      {currentQuote.author.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-sm text-gray-100 flex items-center gap-1.5 truncate">
+                        {currentQuote.author}
+                        <button
+                          onClick={() => setShowBioModal((v) => !v)}
+                          className="text-gray-400 hover:text-teal-300 transition-colors shrink-0"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </h3>
+                      <span className="text-[11px] text-gray-400 font-mono tracking-wide truncate block">
+                        {currentQuote.authorEn}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-widest shrink-0 ${getCategoryStyle(currentQuote.category).badge}`}
+                  >
+                    {CATEGORY_LABELS[currentQuote.category] ??
+                      currentQuote.category}
                   </span>
                 </div>
+
+                <div className="space-y-4 pt-2">
+                  <p className="fluid-quote font-bold text-gray-100 tracking-wide">
+                    "{currentQuote.quote}"
+                  </p>
+                  {currentQuote.originalQuote && (
+                    <p
+                      dir="ltr"
+                      className="text-xs text-gray-400 font-serif italic tracking-wider text-left opacity-75 border-l-2 border-purple-500/40 pl-3"
+                    >
+                      "{currentQuote.originalQuote}"
+                    </p>
+                  )}
+                </div>
+
+                {showBioModal && currentQuote.bio && (
+                  <div className="p-3.5 rounded-2xl bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200 animate-fade-in space-y-1">
+                    <span className="font-bold text-teal-300 block">
+                      درباره این متفکر:
+                    </span>
+                    <p className="font-light text-gray-300 leading-relaxed">
+                      {currentQuote.bio}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-widest">
-                {currentQuote.category}
-              </span>
-            </div>
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrevQuote}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors active:scale-90"
+                    title="نقل‌قول قبلی"
+                  >
+                    <SkipBack className="w-4 h-4 rotate-180" />
+                  </button>
 
-            <div className="space-y-4 pt-2">
-              <p className="text-lg md:text-xl font-bold leading-relaxed text-gray-100 tracking-wide">
-                "{currentQuote.quote}"
-              </p>
-              {currentQuote.originalQuote && (
-                <p
-                  dir="ltr"
-                  className="text-xs text-gray-400 font-serif italic tracking-wider text-left opacity-75 border-l-2 border-purple-500/40 pl-3"
-                >
-                  "{currentQuote.originalQuote}"
-                </p>
-              )}
-            </div>
+                  <button
+                    onClick={handleNextQuote}
+                    className="p-2.5 rounded-xl bg-linear-to-r from-purple-600 to-teal-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(157,78,221,0.3)] hover:opacity-90 transition-opacity active:scale-90"
+                  >
+                    <span>بعدی</span>
+                    <SkipForward className="w-4 h-4 rotate-180" />
+                  </button>
+                </div>
 
-            {showBioModal && currentQuote.bio && (
-              <div className="p-3.5 rounded-2xl bg-purple-950/30 border border-purple-500/30 text-xs text-purple-200 animate-fade-in space-y-1">
-                <span className="font-bold text-cyan-300 block">
-                  درباره این متفکر:
-                </span>
-                <p className="font-light text-gray-300 leading-relaxed">
-                  {currentQuote.bio}
-                </p>
-              </div>
-            )}
-
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrevQuote}
-                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition-colors active:scale-90"
-                  title="نقل‌قول قبلی"
-                >
-                  <SkipBack className="w-4 h-4 rotate-180" />
-                </button>
-
-                <button
-                  onClick={handleNextQuote}
-                  className="p-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(157,78,221,0.3)] hover:opacity-90 transition-opacity active:scale-90"
-                >
-                  <span>بعدی</span>
-                  <SkipForward className="w-4 h-4 rotate-180" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLikeQuote}
-                  className={`px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 border transition-all active:scale-90 ${
-                    hasLikedCurrent
-                      ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Heart
-                    className={`w-3.5 h-3.5 ${
-                      hasLikedCurrent ? 'fill-current text-pink-500' : ''
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLikeQuote}
+                    className={`px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 border transition-all active:scale-90 ${
+                      hasLikedCurrent
+                        ? 'bg-pink-500/20 border-pink-500/50 text-pink-400'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
-                  />
-                  <span className="text-[11px]">{likesCount}</span>
-                </button>
+                  >
+                    <Heart
+                      className={`w-3.5 h-3.5 ${hasLikedCurrent ? 'fill-current text-pink-500' : ''} ${
+                        heartBurst ? 'animate-pop-heart' : ''
+                      }`}
+                    />
+                    <span className="text-[11px]">{likesCount}</span>
+                  </button>
 
-                <button
-                  onClick={() => toggleFavorite(currentQuote)}
-                  className={`p-2.5 rounded-xl border transition-all active:scale-90 ${
-                    favorites.some((f) => f.id === currentQuote.id)
-                      ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                  }`}
-                  title="افزودن به علاقه‌مندی‌ها"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
+                  <button
+                    onClick={() => toggleFavorite(currentQuote)}
+                    className={`p-2.5 rounded-xl border transition-all active:scale-90 ${
                       favorites.some((f) => f.id === currentQuote.id)
-                        ? 'fill-current'
-                        : ''
+                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
                     }`}
-                  />
-                </button>
+                    title="افزودن به علاقه‌مندی‌ها"
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        favorites.some((f) => f.id === currentQuote.id)
+                          ? 'fill-current'
+                          : ''
+                      }`}
+                    />
+                  </button>
 
-                <button
-                  onClick={() => setAutoRotate((v) => !v)}
-                  className={`p-2.5 rounded-xl border transition-all ${
-                    autoRotate
-                      ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                  }`}
-                  title="چرخش خودکار اسلاید"
-                >
-                  <RefreshCw
-                    className={`w-4 h-4 ${autoRotate ? 'animate-spin' : ''}`}
-                  />
-                </button>
+                  <button
+                    onClick={() => setAutoRotate((v) => !v)}
+                    className={`p-2.5 rounded-xl border transition-all ${
+                      autoRotate
+                        ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    }`}
+                    title="چرخش خودکار اسلاید"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${autoRotate ? 'animate-spin' : ''}`}
+                    />
+                  </button>
 
-                <button
-                  onClick={copyQuoteToClipboard}
-                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-colors active:scale-90"
-                  title="کپی متن"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={copyQuoteToClipboard}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-colors active:scale-90"
+                    title="کپی متن"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
 
-                <button
-                  onClick={handleShare}
-                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-colors active:scale-90"
-                  title="اشتراک‌گذاری"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={handleShare}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 transition-colors active:scale-90"
+                    title="اشتراک‌گذاری"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* True empty state — only reachable if a category's quotes are
+             ever fully removed at runtime. No more silent "show everything
+             instead" fallback. */
+          <div className="relative rounded-3xl bg-[#08081a]/90 backdrop-blur-2xl border border-white/10 p-8 sm:p-10 text-center space-y-4 animate-fade-in">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-white/5 flex items-center justify-center text-gray-400">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <p className="text-sm text-gray-300 font-semibold">
+              در این دسته هنوز حکمتی ثبت نشده
+            </p>
+            <p className="text-xs text-gray-500">
+              یک دسته‌ی دیگر را امتحان کن یا به «همه» برگرد.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedCategory('All');
+                setCurrentIndex(0);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-linear-to-r from-purple-600 to-teal-500 text-white text-xs font-bold"
+            >
+              بازگشت به همه
+            </button>
+          </div>
+        )}
 
-        {/* AI Banner */}
+        {/* Discover banner */}
         <button
-          onClick={fetchNewQuoteFromGemini}
-          disabled={isLoadingAi}
-          className="w-full py-4 px-6 rounded-3xl bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-cyan-900/30 hover:from-purple-900/50 hover:to-cyan-900/50 border border-purple-500/30 text-purple-200 font-bold text-xs flex items-center justify-between transition-all duration-300 shadow-lg active:scale-[0.98] group disabled:opacity-70"
+          onClick={handleDiscoverQuote}
+          disabled={isDiscovering}
+          className="w-full py-4 px-5 sm:px-6 rounded-3xl bg-linear-to-r from-purple-900/30 via-fuchsia-900/20 to-teal-900/30 hover:from-purple-900/50 hover:to-teal-900/50 border border-purple-500/30 text-purple-200 font-bold text-xs flex items-center justify-between transition-all duration-300 shadow-lg active:scale-[0.98] group disabled:opacity-70"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-purple-500/20 flex items-center justify-center text-cyan-300 group-hover:scale-110 transition-transform">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-2xl bg-purple-500/20 flex items-center justify-center text-teal-300 group-hover:scale-110 transition-transform shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
-            <div className="text-right">
+            <div className="text-right min-w-0">
               <span className="block font-bold text-sm text-gray-100">
-                دریافت حکمت بی‌نهایت با Gemini AI
+                دریافت حکمت تازه از گنجینه‌ی{' '}
+                {BUILTIN_QUOTES.length.toLocaleString('fa-IR')} جمله‌ای
               </span>
               <span className="block text-[10px] text-gray-400 font-light">
-                تولید هوشمند جملات فلسفی ناب و غیرتکراری
+                هر بار یک نقل‌قول تازه و بدون تکرار، تا وقتی گنجینه تمام شود
               </span>
             </div>
           </div>
           <Zap
-            className={`w-5 h-5 text-cyan-400 ${
-              isLoadingAi
+            className={`w-5 h-5 text-teal-400 shrink-0 ${
+              isDiscovering
                 ? 'animate-bounce'
                 : 'group-hover:translate-x-1 transition-transform'
             }`}
@@ -1211,9 +1751,9 @@ export default function App() {
       {/* Tracklist Modal */}
       {showTracklistModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0a0a1e] border border-cyan-500/30 rounded-3xl p-6 space-y-4 max-h-[80vh] flex flex-col shadow-2xl animate-fade-in">
+          <div className="w-full max-w-md bg-[#0a0a1e] border border-teal-500/30 rounded-3xl p-6 space-y-4 max-h-[80vh] flex flex-col shadow-2xl animate-fade-in">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2 text-cyan-300 font-bold">
+              <div className="flex items-center gap-2 text-teal-300 font-bold">
                 <ListMusic className="w-5 h-5" />
                 <span>لیست موسیقی‌های اتاق ({MUSIC_LIBRARY.length})</span>
               </div>
@@ -1234,15 +1774,15 @@ export default function App() {
                     onClick={() => selectTrack(idx)}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? 'bg-gradient-to-r from-purple-600/30 to-cyan-500/30 border-cyan-400 text-white shadow-[0_0_15px_rgba(0,245,212,0.2)]'
-                        : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.06] text-gray-300'
+                        ? 'bg-linear-to-r from-purple-600/30 to-teal-500/30 border-teal-400 text-white shadow-[0_0_15px_rgba(45,212,191,0.2)]'
+                        : 'bg-white/2 border-white/5 hover:bg-white/6 text-gray-300'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
                           isSelected
-                            ? 'bg-cyan-400 text-black'
+                            ? 'bg-teal-400 text-black'
                             : 'bg-white/5 text-gray-400'
                         }`}
                       >
@@ -1252,17 +1792,24 @@ export default function App() {
                           idx + 1
                         )}
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-100">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-gray-100 truncate">
                           {track.title}
                         </h4>
-                        <span className="text-[10px] text-gray-400">
+                        <span className="text-[10px] text-gray-400 truncate block">
                           {track.artist} • {track.genre}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-gray-400 font-mono">
-                      {track.duration}
+                    {/* Shows the real, decoded audio duration once a track has
+                        been loaded; otherwise avoids printing the placeholder
+                        "3:??" values that used to leak into the UI. */}
+                    <span className="text-[10px] text-gray-400 font-mono shrink-0 ml-2">
+                      {isSelected && durationAudio > 0
+                        ? formatAudioTime(durationAudio)
+                        : track.duration.includes('?')
+                          ? '—'
+                          : track.duration}
                     </span>
                   </div>
                 );
@@ -1273,9 +1820,8 @@ export default function App() {
       )}
 
       {/* Player Bar */}
-      <div className="fixed bottom-4 left-0 right-0 px-4 z-40 max-w-lg mx-auto">
-        <div className="backdrop-blur-2xl bg-[#08081c]/90 rounded-3xl p-4 border border-cyan-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] space-y-3">
-          {/* Progress */}
+      <div className="fixed bottom-3 sm:bottom-4 left-0 right-0 px-3 sm:px-4 z-40 max-w-lg sm:max-w-xl md:max-w-2xl mx-auto safe-bottom">
+        <div className="backdrop-blur-2xl bg-[#08081c]/90 rounded-3xl p-3.5 sm:p-4 border border-teal-500/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)] space-y-3">
           <div className="space-y-1">
             <input
               type="range"
@@ -1283,7 +1829,8 @@ export default function App() {
               max={durationAudio || 100}
               value={currentTimeAudio}
               onChange={handleSeek}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-teal-400"
+              aria-label="پیشرفت آهنگ"
             />
             <div className="flex justify-between text-[9px] text-gray-400 font-mono px-0.5">
               <span>{formatAudioTime(currentTimeAudio)}</span>
@@ -1292,13 +1839,12 @@ export default function App() {
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            {/* Track info */}
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div
                 onClick={() => setShowTracklistModal(true)}
-                className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-cyan-400 p-0.5 cursor-pointer hover:scale-105 transition-transform shrink-0"
+                className="w-10 h-10 rounded-2xl bg-linear-to-tr from-purple-600 to-teal-400 p-0.5 cursor-pointer hover:scale-105 transition-transform shrink-0"
               >
-                <div className="w-full h-full bg-[#0a0a20] rounded-[14px] flex items-center justify-center text-cyan-300">
+                <div className="w-full h-full bg-[#0a0a20] rounded-[14px] flex items-center justify-center text-teal-300">
                   <Music className="w-4 h-4" />
                 </div>
               </div>
@@ -1313,8 +1859,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Controls */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <button
                 onClick={handlePrevTrack}
                 className="p-2 rounded-xl hover:bg-white/10 text-gray-300 transition-colors"
@@ -1325,7 +1870,7 @@ export default function App() {
 
               <button
                 onClick={toggleAudio}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(0,245,212,0.4)] active:scale-90 transition-transform"
+                className="w-10 h-10 rounded-full bg-linear-to-r from-purple-600 to-teal-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(45,212,191,0.4)] active:scale-90 transition-transform"
               >
                 {isPlaying ? (
                   <Pause className="w-4 h-4 fill-current" />
@@ -1343,13 +1888,12 @@ export default function App() {
               </button>
             </div>
 
-            {/* Right cluster */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={() => setIsShuffle((v) => !v)}
                 className={`p-2 rounded-xl transition-colors ${
                   isShuffle
-                    ? 'text-cyan-400 bg-cyan-500/20'
+                    ? 'text-teal-400 bg-teal-500/20'
                     : 'text-gray-400 hover:text-white'
                 }`}
                 title="پخش تصادفی"
@@ -1357,7 +1901,6 @@ export default function App() {
                 <Shuffle className="w-3.5 h-3.5" />
               </button>
 
-              {/* Mute + Volume slider */}
               <div className="hidden sm:flex items-center gap-1.5">
                 <button
                   onClick={toggleMute}
@@ -1381,12 +1924,11 @@ export default function App() {
                     setVolume(v);
                     if (isMuted && v > 0) setIsMuted(false);
                   }}
-                  className="w-16 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                  className="w-16 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-teal-400"
                   aria-label="میزان صدا"
                 />
               </div>
 
-              {/* Mobile-only mute button */}
               <button
                 onClick={toggleMute}
                 className="sm:hidden p-2 rounded-xl hover:bg-white/10 text-gray-300 transition-colors"
@@ -1401,7 +1943,7 @@ export default function App() {
 
               <button
                 onClick={() => setShowTracklistModal(true)}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-300 transition-colors"
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-teal-300 transition-colors"
                 title="لیست آهنگ‌ها"
               >
                 <ListMusic className="w-4 h-4" />
